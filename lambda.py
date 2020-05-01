@@ -1,17 +1,28 @@
 import json
+import urllib.request as urllib
 import urllib.parse
 import boto3
 import io
 import gzip
 import re
+import os
+import requests
+from datetime import datetime
+import dateutil.tz
 
 s3 = boto3.client('s3')
 sns = boto3.client('sns')
-sns_arn = "arn:replace_me"
+sns_arn = os.environ['SNS_TOPIC']
+webhook_url = os.environ['SLACK_HOOK']
+slack_channel = os.environ['SLACK_CHANNEL']
 
 USER_AGENTS = {"console.amazonaws.com", "Coral/Jakarta", "Coral/Netty4"}
 IGNORED_EVENTS = {"DownloadDBLogFilePortion", "TestScheduleExpression", "TestEventPattern", "LookupEvents",
                   "listDnssec", "Decrypt", "REST.GET.OBJECT_LOCK_CONFIGURATION", "ConsoleLogin"}
+
+EST = dateutil.tz.gettz('America/New_York')
+current_time = datetime.now(tz=EST)
+time = current_time.strftime("%I:%M %p, %m/%d/%Y")
 
 
 def post_to_sns(user, event) -> None:
@@ -22,16 +33,47 @@ def post_to_sns(user, event) -> None:
 def post_to_sns_details(message) -> None:
     message = {"Manual AWS Change Detected": message}
     sns_publish(message)
-
+    
 
 def sns_publish(message) -> None:
     sns.publish(
         TargetArn=sns_arn,
-        Message=json.dumps({'default': json.dumps(message)}),
+        Message=json.dumps({'default': json.dumps(message, indent=4, sort_keys=True, ensure_ascii=False, separators=(',', ': '))}),
         MessageStructure='json'
     )
 
+###############
+def post_to_slack(user, event, time, sns) -> None:
+    pretext = f'<!channel>\n*Manual AWS Changed Detected*: \n `{user} --> {event}`'
+    text = f'Detailed output was sent as AWS Notifications email to subscribers of *"{sns}"* topic at `{time}`'
+    slack_publish(pretext, text)
 
+
+def slack_publish(pretext, text) -> None:
+    message = {
+                "channel": slack_channel,
+                "pretext": pretext,
+                "text": text,
+                "mrkdwn_in": ["pretext", "text"]
+                }
+    try:
+        response = requests.post(webhook_url, data=json.dumps(message), headers={'Content-Type': 'application/json'})
+        print('Response: ' + str(response.text) + "\n" + 'Response code: ' + str(response.status_code))
+        print('Message posted to channel "' + slack_channel + '"')
+    except urllib.error.HTTPError as e:
+        text=e.reason
+        status=e.code
+        message = f"""
+            Error sending message to Slack channel {slack_channel}
+            Reason: {text}
+            Status code: {status}
+                """
+        print(message)
+        raise e
+    except urllib.error.URLError as e:
+        print('Server connection failed: ' + str(e.reason))
+
+####
 def check_regex(expr, txt) -> bool:
     match = re.search(expr, txt)
     return match is not None
@@ -95,48 +137,28 @@ def get_user_email(principal_id) -> str:
 
 
 def lambda_handler(event, context) -> None:
-    """
-    This functions processes CloudTrail logs from S3, filters events from the AWS Console, and publishes to SNS
-    :param event: List of S3 Events
-    :param context: AWS Lambda Context Object
-    :return: None
-    """
-    for record in event['Records']:
-        # Get the object from the event and show its content type
-        bucket = record['s3']['bucket']['name']
-        key = urllib.parse.unquote_plus(record['s3']['object']['key'], encoding='utf-8')
-        try:
-            response = s3.get_object(Bucket=bucket, Key=key)
-            content = response['Body'].read()
+    message = json.loads(event['Records'][0]['Sns']['Message'])
+    bucket = message['Records'][0]['s3']['bucket']['name']
+    key = message['Records'][0]['s3']['object']['key']
+    try:
+        response = s3.get_object(Bucket=bucket, Key=key)
+        content = response['Body'].read()
 
-            with gzip.GzipFile(fileobj=io.BytesIO(content), mode='rb') as fh:
-                event_json = json.load(fh)
-                output_dict = [record for record in event_json['Records'] if filter_user_events(record)]
-                if len(output_dict) > 0:
-                    post_to_sns_details(output_dict)
-                for item in output_dict:
-                    post_to_sns(get_user_email(item['userIdentity']['principalId']), item['eventName'])
+        with gzip.GzipFile(fileobj=io.BytesIO(content), mode='rb') as fh:
+            event_json = json.load(fh)
+            output_dict = [record for record in event_json['Records'] if filter_user_events(record)]
+            if len(output_dict) > 0:
+                post_to_sns_details(output_dict)
+            for item in output_dict:
+                post_to_slack(item['userIdentity']['principalId'], item['eventName'], time, sns_arn)
 
-            return response['ContentType']
-        except Exception as e:
-            print(e)
-            message = f"""
-                Error getting object {key} from bucket {bucket}.
-                Make sure they exist and your bucket is in the same region as this function.
-            """
-            print(message)
-            raise e
-
-
-def unit_test() -> None:
-    with open('sample.txt') as json_file:
-        event_json = json.load(json_file)
-        output_dict = [record for record in event_json['Records'] if filter_user_events(record)]
-        for item in output_dict:
-            user_email = get_user_email(item['userIdentity']['principalId'])
-            print(f"{user_email} -- {item['eventName']}")
-            post_to_sns(get_user_email(item['userIdentity']['principalId']), item['eventName'])
-            post_to_sns_details(item)
-
-
-#unit_test()
+        return response['ContentType']
+            
+    except Exception as e:
+        print(e)
+        message = f"""
+            Error getting object {key} from bucket {bucket}.
+            Make sure they exist and your bucket is in the same region as this function.
+        """
+        print(message)
+        raise e

@@ -1,0 +1,22 @@
+{
+  "Records": [
+    {
+      "Sns": {
+        "MessageAttributes": {},
+        "UnsubscribeUrl": "https://sns.us-east-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:us-east-1:142069644989:productdelivery-stage-s3events:122a172c-3e3b-496d-8e47-e0a2ed4f38b1",
+        "Signature": "Dw6ZXWI6wR2HfrADV/V4ODKS+I70nCSpc8T3YO72NUFt/xlPbJVzb2ydMi//5INIdafJcTW0bXaaD0BmeiMZ2AmowpfnXJtBXIphLz58EsW1KN7fB7ip/E5yYaguS79u3YTLYqFhi/WcdpnDWg39EywW1sN8+VxaJQ/7L/C0cvkoJPgbWVmUHZX9vqiqM2OkePLH5ji2h1k+3NxKlMaoQRZs4Z4mpMI8YfkBDmn4Ma3ZrfKgERm/sj0qjD0pFKreXcTm1Y2RFkXhAE0DP8s4A6O9+Mxmddt5KVdgIq0uZ/1hjglOht2NDXqru5rO9N2aczl8f95OWp8z1zodlTvq8Q==",
+        "Message": "{\"Records\":[{\"eventVersion\":\"2.0\",\"eventSource\":\"aws:s3\",\"awsRegion\":\"us-east-1\",\"eventTime\":\"2017-10-16T19:27:22.254Z\",\"eventName\":\"ObjectCreated:Put\",\"userIdentity\":{\"principalId\":\"AWS:AIDAIULXF63K2H2FTTMD6\"},\"requestParameters\":{\"sourceIPAddress\":\"54.214.230.165\"},\"responseElements\":{\"x-amz-request-id\":\"1D2FDA789DA2E260\",\"x-amz-id-2\":\"U1NUbqo5UTwf+Pkj+BTwc3Xuvw/mHpmVYhIWvgikM1jyYvOju8DB+nxwpiduu9yPFXVQxXuIE4o=\"},\"s3\":{\"s3SchemaVersion\":\"1.0\",\"configurationId\":\"Firefox Asset Upload\",\"bucket\":{\"name\":\"it.newrow.com\",\"ownerIdentity\":{\"principalId\":\"A53F4QSBA8O73\"},\"arn\":\"arn:aws:s3:::bucket\"},\"object\":{\"key\":\"CloudTrail/AWSLogs/1234567890/CloudTrail/us-east-1/1970/01/01/1234567890_CloudTrail_us-east-1_197001019T1005Z_2Iys7xENXi4MtQoU.json.gz\",\"size\":319,\"eTag\":\"704c98757a8201d30cd3aef75f811ee7\",\"versionId\":\"KXoPKO9f6A8pCs0_OHB.9aff.uVYU_Y0\",\"sequencer\":\"0059E5081A2100FEEC\"}}}]}",
+        "Subject": "Amazon S3 Notification",
+        "Type": "Notification",
+        "SigningCertUrl": "https://sns.us-east-1.amazonaws.com/SimpleNotificationService-433026a4050d206028891664da859041.pem",
+        "Timestamp": "2017-10-16T19:27:22.316Z",
+        "TopicArn": "arn:aws:sns:us-east-1:1234567890:event-s3-topic",
+        "SignatureVersion": "1",
+        "MessageId": "349f1147-d0b6-5367-a9a1-4318daec8389"
+      },
+      "EventVersion": "1.0",
+      "EventSubscriptionArn": "arn:aws:sns:us-east-1...",
+      "EventSource": "aws:sns"
+    }
+  ]
+}
