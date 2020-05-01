@@ -1,6 +1,6 @@
 Re-factored script: 
 
-- sends richly formatted Slack short notification indicating about manual AWS change and details sent via email at current time ()
+- sends richly formatted Slack short notification indicating about manual AWS change and details sent via email at current time
 - full email with event details has indents to be a more human-readable.
 - added post_to_slack and slack_publish functions
 - added datetime and timezone variables
