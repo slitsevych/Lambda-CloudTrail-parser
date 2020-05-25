@@ -20,8 +20,8 @@ USER_AGENTS = {"console.amazonaws.com", "Coral/Jakarta", "Coral/Netty4"}
 IGNORED_EVENTS = {"DownloadDBLogFilePortion", "TestScheduleExpression", "TestEventPattern", "LookupEvents",
                   "listDnssec", "Decrypt", "REST.GET.OBJECT_LOCK_CONFIGURATION", "ConsoleLogin"}
 
-EST = dateutil.tz.gettz('America/New_York')
-current_time = datetime.now(tz=EST)
+timezone = dateutil.tz.gettz('Asia/Jerusalem')
+current_time = datetime.now(tz=timezone)
 time = current_time.strftime("%I:%M %p, %m/%d/%Y")
 
 
@@ -73,7 +73,7 @@ def slack_publish(pretext, text) -> None:
     except urllib.error.URLError as e:
         print('Server connection failed: ' + str(e.reason))
 
-####
+
 def check_regex(expr, txt) -> bool:
     match = re.search(expr, txt)
     return match is not None
